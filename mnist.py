@@ -6,12 +6,6 @@ import timeit
 import argparse
 import os
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', default=2, type=int, metavar='N', help='number of total epochs to run')
-    args = parser.parse_args()
-    train(0, args)
-
 class ConvNet(nn.Module):
     def __init__(self, num_classes=10):
         super(ConvNet, self).__init__()
@@ -40,8 +34,6 @@ def train(process, args):
     model = ConvNet()
     model = model.to(device)
 
-    batch_size = 100
-
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
     criterion = criterion.to(device)
@@ -49,15 +41,18 @@ def train(process, args):
     optimizer = torch.optim.SGD(model.parameters(), 1e-4)
 
     # Data loading code
-    train_dataset = torchvision.datasets.MNIST(root='./data',
-                                               train=True,
-                                               transform=transforms.ToTensor(),
-                                               download=True)
-    train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                               batch_size=batch_size,
-                                               shuffle=True,
-                                               num_workers=0,
-                                               pin_memory=True)
+    train_dataset = torchvision.datasets.MNIST(
+           root='./data',
+           train=True,
+           transform=transforms.ToTensor(),
+           download=True)
+
+    train_loader = torch.utils.data.DataLoader(
+           dataset=train_dataset,
+           batch_size=args.batch_size,
+           shuffle=True,
+           num_workers=0,
+           pin_memory=True)
 
     start = timeit.default_timer()
     total_step = len(train_loader)
@@ -82,4 +77,9 @@ def train(process, args):
         print('Training complete in: %5.3f' % (timeit.default_timer() - start))
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--epochs', default=2, type=int, help='number of total epochs to run')
+    parser.add_argument('--batch_size', default=128, type=int, help='batch size')
+    args = parser.parse_args()
+
+    train(0, args)
