@@ -28,7 +28,7 @@ class ConvNet(nn.Module):
         out = self.fc(out)
         return out
 
-def train(process, args):
+def train(args, process=0):
     device = torch.device('cpu')
 
     model = ConvNet()
@@ -54,9 +54,9 @@ def train(process, args):
            num_workers=0,
            pin_memory=True)
 
-    start = timeit.default_timer()
     total_step = len(train_loader)
     for epoch in range(args.epochs):
+        start = timeit.default_timer()
         for i, (images, labels) in enumerate(train_loader):
             images = images.to(device)
             labels = labels.to(device)
@@ -69,17 +69,14 @@ def train(process, args):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            if (i + 1) % 100 == 0 and process == 0:
-                print('Epoch [%4d/%4d], Step [%4d/%4d], Loss: %6.4f' %
-                        (epoch+1, args.epochs, i+1, total_step, loss.item()))
 
-    if process == 0:
-        print('Training complete in: %5.3f' % (timeit.default_timer() - start))
+        print('epoch [% 4d/% 4d], train loss %6.4f, %5.3fsec' % (epoch+1, args.epochs, loss.item(), timeit.default_timer() - start))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', default=2, type=int, help='number of total epochs to run')
-    parser.add_argument('--batch_size', default=128, type=int, help='batch size')
+    parser.add_argument('--epochs', default=5, type=int, help='number of total epochs to run')
+    parser.add_argument('--batch_size', default=12, type=int, help='batch size')
     args = parser.parse_args()
+    print(vars(args))
 
-    train(0, args)
+    train(args, process=0)
