@@ -28,7 +28,7 @@ class ConvNet(nn.Module):
         out = self.fc(out)
         return out
 
-def train(args, process=0):
+def main(args):
     device = torch.device('cpu')
 
     model = ConvNet()
@@ -79,4 +79,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(vars(args))
 
-    train(args, process=0)
+    main(args)

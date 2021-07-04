@@ -8,19 +8,6 @@ import timeit
 import argparse
 import os
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--nodes', default=1, type=int, metavar='N', help='number of data loading workers')
-    parser.add_argument('--processes', default=1, type=int, help='number of processes per node')
-    parser.add_argument('--nr', default=0, type=int, help='ranking within the nodes')
-    parser.add_argument('--epochs', default=2, type=int, metavar='N', help='number of total epochs to run')
-    args = parser.parse_args()
-
-    args.world_size = args.processes * args.nodes
-#   os.environ['MASTER_ADDR'] = 'localhost'
-#   os.environ['MASTER_PORT'] = '8888'
-    mp.spawn(train, nprocs=args.processes, args=(args,))
-
 class ConvNet(nn.Module):
     def __init__(self, num_classes=10):
         super(ConvNet, self).__init__()
@@ -104,4 +91,15 @@ def train(process, args):
         print('Training complete in: %5.3f' % (timeit.default_timer() - start))
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--nodes', default=1, type=int, metavar='N', help='number of data loading workers')
+    parser.add_argument('--processes', default=1, type=int, help='number of processes per node')
+    parser.add_argument('--nr', default=0, type=int, help='ranking within the nodes')
+    parser.add_argument('--epochs', default=2, type=int, metavar='N', help='number of total epochs to run')
+    args = parser.parse_args()
+    print(vars(args))
+
+    args.world_size = args.processes * args.nodes
+#   os.environ['MASTER_ADDR'] = 'localhost'
+#   os.environ['MASTER_PORT'] = '8888'
+    mp.spawn(train, nprocs=args.processes, args=(args,))
