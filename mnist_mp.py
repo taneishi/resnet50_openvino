@@ -1,3 +1,4 @@
+import torch.multiprocessing as mp
 import torchvision
 import torchvision.transforms as transforms
 import torch
@@ -8,27 +9,20 @@ import os
 
 from model import ConvNet
 
-def main(args):
+def train(process, args):
     torch.manual_seed(10)
-
-    world_size = int(os.environ[args.env_size]) if args.env_size in os.environ else 1
-    local_rank = int(os.environ[args.env_rank]) if args.env_rank in os.environ else 0
 
     device = torch.device('cpu')
 
-    if world_size > 1:
-        print('rank: {}/{}'.format(local_rank+1, world_size))
-        torch.distributed.init_process_group(
-                backend='gloo',
-                init_method='file://%s' % args.tmpname,
-                rank=local_rank,
-                world_size=world_size)
+    torch.distributed.init_process_group(
+            backend='gloo',
+            init_method='file:///tmp/%s' % args.tmpname,
+            rank=process,
+            world_size=args.processes)
 
     net = ConvNet()
     net = net.to(device)
-    # Wrap the model
-    if world_size > 1:
-        net = nn.parallel.DistributedDataParallel(net)
+    net = nn.parallel.DistributedDataParallel(net)
 
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -41,9 +35,7 @@ def main(args):
             transform=transforms.ToTensor(),
             download=True)
 
-    train_sampler = None
-    if world_size > 1:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
 
     train_loader = torch.utils.data.DataLoader(
             dataset=train_dataset,
@@ -68,17 +60,16 @@ def main(args):
             loss.backward()
             optimizer.step()
 
-        if local_rank == 0:
+        if process == 0:
             print('epoch [% 4d/% 4d], train loss %6.4f, %5.3fsec' % (epoch+1, args.epochs, loss.item(), timeit.default_timer() - start))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env_size', default='WORLD_SIZE', type=str)
-    parser.add_argument('--env_rank', default='RANK', type=str)
+    parser.add_argument('--processes', default=1, type=int, help='number of processes per node')
     parser.add_argument('--tmpname', default='tmpfile', type=str)
     parser.add_argument('--epochs', default=5, type=int, metavar='N', help='number of total epochs to run')
     parser.add_argument('--batch_size', default=12, type=int, help='batch size')
     args = parser.parse_args()
     print(vars(args))
 
-    main(args)
+    mp.spawn(train, nprocs=args.processes, args=(args,))
