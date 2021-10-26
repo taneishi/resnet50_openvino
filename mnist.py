@@ -11,13 +11,13 @@ from model import ConvNet
 def main(args):
     device = torch.device('cpu')
 
-    model = ConvNet()
-    model = model.to(device)
+    net = ConvNet()
+    net = net.to(device)
 
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
     criterion = criterion.to(device)
-    optimizer = torch.optim.SGD(model.parameters(), 1e-4)
+    optimizer = torch.optim.SGD(net.parameters(), 1e-4)
 
     # Data loading code
     train_dataset = torchvision.datasets.MNIST(
@@ -40,7 +40,7 @@ def main(args):
             labels = labels.to(device)
 
             # Forward pass
-            outputs = model(images)
+            outputs = net(images)
             loss = criterion(outputs, labels)
 
             # Backward and optimize
@@ -49,6 +49,13 @@ def main(args):
             optimizer.step()
 
         print('epoch [% 4d/% 4d], train loss %6.4f, %5.3fsec' % (epoch+1, args.epochs, loss.item(), timeit.default_timer() - start))
+
+    os.makedirs('model', exist_ok=True)
+    torch.onnx.export(net,
+            images,
+            'model/convnet.onnx',
+            verbose=False)
+    print('ONNX model exported.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
