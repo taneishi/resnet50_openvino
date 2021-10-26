@@ -51,11 +51,9 @@ def main(args):
         print('epoch [% 4d/% 4d], train loss %6.4f, %5.3fsec' % (epoch+1, args.epochs, loss.item(), timeit.default_timer() - start))
 
     os.makedirs('model', exist_ok=True)
-    torch.onnx.export(net,
-            images,
-            'model/convnet.onnx',
-            verbose=False)
-    print('ONNX model exported.')
+    torch.save(net.state_dict(), 'model/convnet.pth')
+    torch.onnx.export(net, images, 'model/convnet.onnx', verbose=False)
+    print('PyTorch and ONNX models exported.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
