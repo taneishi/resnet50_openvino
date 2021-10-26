@@ -1,44 +1,62 @@
-# Distributed data parallel training in Pytorch
+# Multi-process and distributed data parallel training in PyTorch
 
 ## Motivation
 
-The easiest way to speed up neural network training is to use a GPU, which provides large speedups over CPUs on the types of calculations (matrix multiplies and additions) that are common in neural networks. As the model or dataset gets bigger, one GPU quickly becomes insufficient. For example, big language models such as [BERT](https://arxiv.org/abs/1810.04805) and [GPT-2](https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) are trained on hundreds of GPUs. To multi-GPU training, we must have a way to split the model and data between different GPUs and to coordinate the training. 
+The easiest way to speed up neural network training is to use an accelerator such as GPU, which provides large speedups over genral CPUs on the types of calculations (matrix multiplies and additions) that are common in neural networks. 
+As the model or dataset gets bigger, one accelerator quickly becomes insufficient. 
+For example, big language models such as [BERT](https://arxiv.org/abs/1810.04805) and [GPT-2](https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) are trained on hundreds of GPUs.
+To multi-process training, we must have a way to split the model and data between different accelerators and to coordinate the training. 
 
 
 ### Why distributed data parallel?
 
-I like to implement my models in Pytorch because I find it has the best balance between control and ease of use of the major neural-net frameworks. Pytorch has two ways to split models and data across multiple GPUs: [`nn.DataParallel`](https://pytorch.org/docs/stable/nn.html#dataparallel) and [`nn.DistributedDataParallel`](https://pytorch.org/docs/stable/nn.html#distributeddataparallel). `nn.DataParallel` is easier to use (just wrap the model and run your training script). However, because it uses one process to compute the model weights and then distribute them to each GPU during each batch, networking quickly becomes a bottle-neck and GPU utilization is often very low. Furthermore, `nn.DataParallel` requires that all the GPUs be on the same node and doesn't work with [Apex](https://nvidia.github.io/apex/amp.html) for [mixed-precision](https://devblogs.nvidia.com/mixed-precision-training-deep-neural-networks/) training. 
+I like to implement my models in PyTorch because I find it has the best balance between control and ease of use of the major neural-net frameworks.
+PyTorch has two ways to split models and data across multiple GPUs: [`nn.DataParallel`](https://pytorch.org/docs/stable/nn.html#dataparallel) and [`nn.DistributedDataParallel`](https://pytorch.org/docs/stable/nn.html#distributeddataparallel). `nn.DataParallel` is easier to use (just wrap the model and run your training script).
+However, because it uses one process to compute the model weights and then distribute them to each GPU during each batch, networking quickly becomes a bottle-neck and GPU utilization is often very low.
+Furthermore, `nn.DataParallel` requires that all the GPUs be on the same node and doesn't work with [Apex](https://nvidia.github.io/apex/amp.html) for [mixed-precision](https://devblogs.nvidia.com/mixed-precision-training-deep-neural-networks/) training. 
 
 ### The existing documentation is insufficient
 
-In general, the Pytorch documentation is thorough and clear, especially in version 1.0.x. I taught myself Pytorch almost entirely from the documentation and tutorials: this is definitely much more a reflection on Pytorch's ease of use and excellent documentation than it is any special ability on my part. So I was very surprised when I spent some time trying to figure out how to use `DistributedDataParallel` and found all of the examples and tutorials to be some combination of inaccessible, incomplete, or overloaded with irrelevant features. 
+In general, the PyTorch documentation is thorough and clear, especially in version 1.0.x.
+I taught myself PyTorch almost entirely from the documentation and tutorials: this is definitely much more a reflection on PyTorch's ease of use and excellent documentation than it is any special ability on my part.
+So I was very surprised when I spent some time trying to figure out how to use `DistributedDataParallel` and found all of the examples and tutorials to be some combination of inaccessible, incomplete, or overloaded with irrelevant features. 
 
-Pytorch provides a [tutorial](https://pytorch.org/tutorials/beginner/aws_distributed_training_tutorial.html) on distributed training using AWS, which does a pretty good job of showing you how to set things up on the AWS side. However, the rest of it is a bit messy, as it spends a lot of time showing how to calculate metrics for some reason before going back to showing how to wrap your model and launch the processes. It also doesn't describe what `nn.DistributedDataParallel` does, which makes the relevant code blocks difficult to follow. 
+PyTorch provides a [tutorial](https://pytorch.org/tutorials/beginner/aws_distributed_training_tutorial.html) on distributed training using AWS, which does a pretty good job of showing you how to set things up on the AWS side.
+However, the rest of it is a bit messy, as it spends a lot of time showing how to calculate metrics for some reason before going back to showing how to wrap your model and launch the processes. It also doesn't describe what `nn.DistributedDataParallel` does, which makes the relevant code blocks difficult to follow. 
 
-The [tutorial](https://pytorch.org/tutorials/intermediate/dist_tuto.html) on writing distributed applications in Pytorch has much more detail than necessary for a first pass and is not accessible to somebody without a strong background on multiprocessing in Python. It spends a lot of time replicating the functionality in `nn.DistributedDataParallel`. However, it doesn't give a high-level overview of what it does and provides no insight on how to *use* it. 
+The [tutorial](https://pytorch.org/tutorials/intermediate/dist_tuto.html) on writing distributed applications in PyTorch has much more detail than necessary for a first pass and is not accessible to somebody without a strong background on multiprocessing in Python.
+It spends a lot of time replicating the functionality in `nn.DistributedDataParallel`. However, it doesn't give a high-level overview of what it does and provides no insight on how to *use* it. 
 (https://pytorch.org/tutorials/intermediate/ddp_tutorial.html)
 
-There's also a Pytorch [tutorial](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html) on getting started with distributed data parallel. This one shows how to do some setup, but doesn't explain what the setup is for, and then shows some code to split a model across GPUs and do one optimization step. Unfortunately, I'm pretty sure the code as written won't run (the function names don't match up) and furthermore it doesn't tell you *how* to run the code. Like the previous tutorial, it also doesn't give a high-level overview of how distributed training works. 
+There's also a PyTorch [tutorial](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html) on getting started with distributed data parallel.
+This one shows how to do some setup, but doesn't explain what the setup is for, and then shows some code to split a model across GPUs and do one optimization step.
+Unfortunately, I'm pretty sure the code as written won't run (the function names don't match up) and furthermore it doesn't tell you *how* to run the code. Like the previous tutorial, it also doesn't give a high-level overview of how distributed training works. 
 
-The closest to a MWE example Pytorch provides is the [Imagenet](https://github.com/pytorch/examples/tree/master/imagenet) training example. Unfortunately, that example also demonstrates pretty much every other feature Pytorch has, so it's difficult to pick out what pertains to distributed, multi-GPU training. 
+The closest to a MWE example PyTorch provides is the [Imagenet](https://github.com/pytorch/examples/tree/master/imagenet) training example.
+Unfortunately, that example also demonstrates pretty much every other feature PyTorch has, so it's difficult to pick out what pertains to distributed, multi-GPU training. 
 
-Apex provides their own [version](https://github.com/NVIDIA/apex/tree/master/examples/imagenet) of the Pytorch Imagenet example. The documentation there tells you that their version of `nn.DistributedDataParallel` is a drop-in replacement for Pytorch's, which is only helpful after learning how to use Pytorch's. 
+Apex provides their own [version](https://github.com/NVIDIA/apex/tree/master/examples/imagenet) of the PyTorch Imagenet example.
+The documentation there tells you that their version of `nn.DistributedDataParallel` is a drop-in replacement for PyTorch's, which is only helpful after learning how to use PyTorch's. 
 
 This [tutorial](http://www.telesens.co/2019/04/04/distributed-data-parallel-training-using-pytorch-on-aws/) has a good description of what's going on under the hood and how it's different from `nn.DataParallel`. However, it doesn't have code examples of how to use `nn.DataParallel`.
 
 ## Outline
 
-This tutorial is really directed at people who are already familiar with training neural network models in Pytorch, and I won't go over any of those parts of the code. I'll begin by summarizing the big picture. I then show a minimum working example of training on MNIST using on GPU. I modify this example to train on multiple GPUs, possibly across multiple nodes, and explain the changes line by line. Importantly, I also explain how to run the code. As a bonus, I also demonstrate how to use Apex to do easy mixed-precision distribued training. 
+This tutorial is really directed at people who are already familiar with training neural network models in PyTorch, and I won't go over any of those parts of the code.
+I'll begin by summarizing the big picture. I then show a minimum working example of training on MNIST using on GPU. I modify this example to train on multiple GPUs, possibly across multiple nodes, and explain the changes line by line.
+Importantly, I also explain how to run the code. As a bonus, I also demonstrate how to use Apex to do easy mixed-precision distribued training. 
 
 ## The big picture
 
-Multiprocessing with `DistributedDataParallel` duplicates the model across multiple GPUs, each of which is controlled by one process. (If you want, you can have each process control multiple GPUs, but that should be obviously slower than having one GPU per process. It's also possible to have multiple worker processes that fetch data for each GPU, but I'm going to leave that out for the sake of simplicity.) The GPUs can all be on the same node or spread across multiple nodes. Every process does identical tasks, and each process communicates with all the others. Only gradients are passed between the processes/GPUs so that network communication is less of a bottleneck. 
+Multiprocessing with `DistributedDataParallel` duplicates the model across multiple GPUs, each of which is controlled by one process.
+(If you want, you can have each process control multiple GPUs, but that should be obviously slower than having one GPU per process. It's also possible to have multiple worker processes that fetch data for each GPU, but I'm going to leave that out for the sake of simplicity.)
+The GPUs can all be on the same node or spread across multiple nodes. Every process does identical tasks, and each process communicates with all the others. Only gradients are passed between the processes/GPUs so that network communication is less of a bottleneck. 
 
 ![figure](graphics/processes-gpus.png)
 
 During training, each process loads its own minibatches from disk and passes them to its GPU. Each GPU does its own forward pass, and then the gradients are all-reduced across the GPUs. Gradients for each layer do not depend on previous layers, so the gradient all-reduce is calculated concurrently with the backwards pass to futher alleviate the networking bottleneck. At the end of the backwards pass, every node has the averaged gradients, ensuring that the model weights stay synchronized. 
 
-All this requires that the multiple processes, possibly on multiple nodes, are synchronized and communicate. Pytorch does this through its [`distributed.init_process_group`](https://pytorch.org/docs/stable/distributed.html#initialization) function. This function needs to know where to find process 0 so that all the processes can sync up and the total number of processes to expect. Each individual process also needs to know the total number of processes as well as its rank within the processes and which GPU to use. It's common to call the total number of processes the *world size*. Finally, each process needs to know which slice of the data to work on so that the batches are non-overlapping. Pytorch provides [`nn.utils.data.DistributedSampler`](https://pytorch.org/docs/stable/_modules/torch/utils/data/distributed.html) to accomplish this. 
+All this requires that the multiple processes, possibly on multiple nodes, are synchronized and communicate. PyTorch does this through its [`distributed.init_process_group`](https://pytorch.org/docs/stable/distributed.html#initialization) function. This function needs to know where to find process 0 so that all the processes can sync up and the total number of processes to expect. Each individual process also needs to know the total number of processes as well as its rank within the processes and which GPU to use. It's common to call the total number of processes the *world size*. Finally, each process needs to know which slice of the data to work on so that the batches are non-overlapping. PyTorch provides [`nn.utils.data.DistributedSampler`](https://pytorch.org/docs/stable/_modules/torch/utils/data/distributed.html) to accomplish this. 
 
 ## Minimum working examples with explanations
 
@@ -49,17 +67,13 @@ To demonstrate how to do this, I'll create an example that [trains on MNIST](htt
 First, we import everything we need. 
 
 ```python {.line-numbers}
-import os
-from datetime import datetime
-import argparse
 import torch.multiprocessing as mp
 import torchvision
 import torchvision.transforms as transforms
 import torch
 import torch.nn as nn
-import torch.distributed as dist
-from apex.parallel import DistributedDataParallel as DDP
-from apex import amp
+import argparse
+import os
 ```
 
 We define a very simple convolutional model for predicting MNIST. 
@@ -207,7 +221,7 @@ Next, let's look at the modifications to `train`. I'll fence the new lines again
 def train(gpu, args):
     ######################################################################
     rank = args.nr * args.gpus + gpu	                          
-    dist.init_process_group(                                   
+    torch.distributed.init_process_group(                                   
     	backend='nccl',                                         
    		init_method='env://',                                   
     	world_size=args.world_size,                              
