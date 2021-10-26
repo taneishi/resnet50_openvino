@@ -10,12 +10,8 @@ import os
 from model import ConvNet
 
 def main(args):
-    device = torch.device('cpu')
-
     if args.mode == 'pytorch':
         net = ConvNet()
-        net = net.to(device)
-
         net.load_state_dict(torch.load('model/convnet.pth'))
 
     elif args.mode == 'openvino':
@@ -36,7 +32,6 @@ def main(args):
 
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
-    criterion = criterion.to(device)
 
     # Data loading code
     test_dataset = torchvision.datasets.MNIST(
@@ -55,9 +50,6 @@ def main(args):
 
     for index, (images, labels) in enumerate(test_loader):
         start_time = timeit.default_timer()
-
-        images = images.to(device)
-        labels = labels.to(device)
 
         if args.mode == 'pytorch':
             with torch.no_grad():
