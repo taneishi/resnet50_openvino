@@ -58,7 +58,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', default=5, type=int, metavar='N', help='number of total epochs to run')
-    parser.add_argument('--batch_size', default=12, type=int, help='batch size')
+    parser.add_argument('--batch_size', default=96, type=int, help='batch size')
     args = parser.parse_args()
     print(vars(args))
 

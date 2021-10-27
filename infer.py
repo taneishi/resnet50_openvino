@@ -24,7 +24,7 @@ def main(args):
 
         # loading model to the plugin
         print('Loading model to the plugin')
-        exec_net = ie.load_network(network=net, num_requests=2, device_name='CPU')
+        exec_net = ie.load_network(network=net, num_requests=1, device_name='CPU')
 
         print('Preparing input blobs')
         input_blob = next(iter(net.input_info))
@@ -64,7 +64,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', default=12, type=int)
+    parser.add_argument('--batch_size', default=96, type=int)
     parser.add_argument('--mode', choices=['pytorch', 'openvino'], default='pytorch', type=str)
     args = parser.parse_args()
     print(vars(args))
