@@ -21,7 +21,7 @@ def main(args):
 
     # Data loading code
     train_dataset = torchvision.datasets.MNIST(
-            root='./data',
+            root=args.data_dir,
             train=True,
             transform=transforms.ToTensor(),
             download=True)
@@ -59,6 +59,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', default=5, type=int, metavar='N', help='number of total epochs to run')
     parser.add_argument('--batch_size', default=96, type=int, help='batch size')
+    parser.add_argument('--data_dir', default='data', type=str)
     args = parser.parse_args()
     print(vars(args))
 
