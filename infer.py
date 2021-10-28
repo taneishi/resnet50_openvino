@@ -35,7 +35,7 @@ def main(args):
 
     # Data loading code
     test_dataset = torchvision.datasets.MNIST(
-            root='./data',
+            root=args.data_dir,
             train=False,
             transform=transforms.ToTensor(),
             download=True)
@@ -66,6 +66,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=96, type=int)
     parser.add_argument('--mode', choices=['pytorch', 'openvino'], default='pytorch', type=str)
+    parser.add_argument('--data_dir', default='data', type=str)
     args = parser.parse_args()
     print(vars(args))
 
