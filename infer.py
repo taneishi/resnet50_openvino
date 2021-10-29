@@ -25,7 +25,7 @@ def main(args):
 
         # loading model to the plugin
         print('Loading model to the plugin')
-        exec_net = ie.load_network(network=net, num_requests=1, device_name='CPU')
+        exec_net = ie.load_network(network=net, num_requests=args.num_requests, device_name='CPU')
 
         print('Preparing input blobs')
         input_blob = next(iter(net.input_info))
@@ -49,8 +49,9 @@ def main(args):
             pin_memory=True,
             drop_last=True)
 
+    loss = 0
+    start_time = timeit.default_timer()
     for index, (images, labels) in enumerate(test_loader):
-        start_time = timeit.default_timer()
 
         if args.mode == 'pytorch':
             with torch.no_grad():
@@ -59,12 +60,13 @@ def main(args):
             outputs = exec_net.infer(inputs={input_blob: images})
             outputs = torch.from_numpy(outputs[output_blob])
 
-        loss = criterion(outputs, labels)
+        loss += criterion(outputs, labels)
 
-        print('[% 4d/% 4d], test loss %6.4f, %5.3fsec' % (index, len(test_loader), loss.item(), (timeit.default_timer() - start_time)))
+    print('test loss %6.4f, %5.3fsec' % (loss.item() / len(test_loader), (timeit.default_timer() - start_time)))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--num_requests', default=1, type=int)
     parser.add_argument('--batch_size', default=96, type=int)
     parser.add_argument('--mode', choices=['pytorch', 'openvino'], default='pytorch', type=str)
     parser.add_argument('--data_dir', default='data', type=str)
