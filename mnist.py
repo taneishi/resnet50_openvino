@@ -11,8 +11,6 @@ from model import ConvNet
 def main(args):
     device = torch.device('cpu')
 
-    print(torch.get_num_threads())
-
     net = ConvNet()
     net = net.to(device)
 
@@ -59,10 +57,15 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--num_threads', default=None, type=int, help='number of threads')
     parser.add_argument('--epochs', default=5, type=int, metavar='N', help='number of total epochs to run')
     parser.add_argument('--batch_size', default=96, type=int, help='batch size')
     parser.add_argument('--data_dir', default='data', type=str)
     args = parser.parse_args()
+    if not args.num_threads:
+        args.num_threads = torch.get_num_threads()
+    else:
+        torch.set_num_threads(args.num_threads)
     print(vars(args))
 
     main(args)
