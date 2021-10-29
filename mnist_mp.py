@@ -16,7 +16,7 @@ def train(process, args):
 
     torch.distributed.init_process_group(
             backend='gloo',
-            init_method='file:///tmp/%s' % args.tmpname,
+            init_method='tcp://127.0.0.1:23456',
             rank=process,
             world_size=args.processes)
 
@@ -66,11 +66,15 @@ def train(process, args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--processes', default=1, type=int, help='number of processes per node')
-    parser.add_argument('--tmpname', default='tmpfile', type=str)
+    parser.add_argument('--num_threads', default=None, type=int, help='number of threads')
     parser.add_argument('--epochs', default=5, type=int, metavar='N', help='number of total epochs to run')
-    parser.add_argument('--batch_size', default=12, type=int, help='batch size')
+    parser.add_argument('--batch_size', default=96, type=int, help='batch size')
     parser.add_argument('--data_dir', default='data', type=str)
     args = parser.parse_args()
+    if not args.num_threads:
+        args.num_threads = torch.get_num_threads()
+    else:
+        torch.set_num_threads(args.num_threads)
     print(vars(args))
 
     mp.spawn(train, nprocs=args.processes, args=(args,))
