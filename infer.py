@@ -13,6 +13,7 @@ def main(args):
     if args.mode == 'pytorch':
         net = ConvNet()
         net.load_state_dict(torch.load('model/convnet.pth'))
+        net.eval()
 
     elif args.mode == 'openvino':
         model_xml = 'model/convnet.xml'

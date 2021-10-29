@@ -11,6 +11,8 @@ from model import ConvNet
 def main(args):
     device = torch.device('cpu')
 
+    print(torch.get_num_threads())
+
     net = ConvNet()
     net = net.to(device)
 
