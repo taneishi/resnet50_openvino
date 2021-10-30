@@ -5,8 +5,15 @@ source openvino/bin/activate
 #pip install --upgrade pip
 #pip install openvino_dev torchvision onnx==1.8.1
 
-#python mnist.py
-python infer.py
+#python mnist.py --epochs 10
+
+python infer.py --mode pytorch
 
 mo --input_model model/convnet.onnx --output_dir model
-python infer.py --mode openvino
+python infer.py --mode fp32
+
+mkdir -p annotation
+convert_annotation mnist_csv --annotation_file val.txt -o annotation
+
+pot -c config/pot.yaml
+python infer.py --mode int8
