@@ -15,8 +15,13 @@ def main(args):
         net.load_state_dict(torch.load('model/convnet.pth'))
         net.eval()
 
-    elif args.mode == 'openvino':
-        model_xml = 'model/convnet.xml'
+    elif args.mode == 'fp32' or args.mode == 'int8':
+
+        if args.mode == 'fp32':
+            model_xml = 'model/convnet.xml'
+        elif args.mode == 'int8':
+            model_xml = 'model/INT8/convnet.xml'
+
         model_bin = model_xml.replace('xml', 'bin')
 
         print('Creating Inference Engine')
@@ -56,7 +61,7 @@ def main(args):
         if args.mode == 'pytorch':
             with torch.no_grad():
                 outputs = net(images)
-        elif args.mode == 'openvino':
+        elif args.mode == 'fp32' or args.mode == 'int8':
             outputs = exec_net.infer(inputs={input_blob: images})
             outputs = torch.from_numpy(outputs[output_blob])
 
@@ -68,7 +73,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_requests', default=1, type=int)
     parser.add_argument('--batch_size', default=96, type=int)
-    parser.add_argument('--mode', choices=['pytorch', 'openvino'], default='pytorch', type=str)
+    parser.add_argument('--mode', choices=['pytorch', 'fp32', 'int8'], default='pytorch', type=str)
     parser.add_argument('--data_dir', default='data', type=str)
     args = parser.parse_args()
     print(vars(args))
