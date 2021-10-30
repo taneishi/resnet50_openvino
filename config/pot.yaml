@@ -1,0 +1,14 @@
+model:
+  model_name: convnet
+  model: model/convnet.xml
+  weights: model/convnet.bin
+
+engine:
+  config: config/convnet.yaml
+
+compression:
+  algorithms:
+  - name: DefaultQuantization
+    params:
+      preset: mixed
+      stat_subset_size: 960

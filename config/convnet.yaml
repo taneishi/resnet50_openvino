@@ -1,0 +1,23 @@
+models:
+  - name: mnist-convnet
+
+    launchers:
+      - framework: dlsdk
+        device: CPU
+
+        model: convnet.xml
+        weights: convnet.bin
+        adapter: classification
+
+    datasets:
+      - name: mnist_csv
+        annotation: annotation/mnist_csv.pickle
+        dataset_meta: annotation/mnist_csv.json
+        data_source: images
+        reader: pillow_imread
+
+        preprocessing:
+          - type: rgb_to_gray  
+
+        metrics:
+          - type: accuracy
