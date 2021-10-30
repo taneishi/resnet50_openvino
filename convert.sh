@@ -16,4 +16,5 @@ mkdir -p annotation
 convert_annotation mnist_csv --annotation_file val.txt -o annotation
 
 pot -c config/pot.yaml
+cp $(ls results/convnet_DefaultQuantization/*/optimized/* | tail -3) model/INT8
 python infer.py --mode int8
