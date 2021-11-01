@@ -12,6 +12,13 @@ from model import ConvNet
 def train(process, args):
     torch.manual_seed(10)
 
+    if not args.num_threads:
+        args.num_threads = torch.get_num_threads()
+    else:
+        torch.set_num_threads(args.num_threads)
+    if process == 0:
+        print(vars(args))
+
     device = torch.device('cpu')
 
     torch.distributed.init_process_group(
@@ -44,6 +51,8 @@ def train(process, args):
             pin_memory=True,
             sampler=train_sampler)
 
+    torch.distributed.barrier()
+
     for epoch in range(args.epochs):
         start = timeit.default_timer()
         net.train()
@@ -60,6 +69,8 @@ def train(process, args):
             loss.backward()
             optimizer.step()
 
+            torch.distributed.barrier()
+
         if process == 0:
             print('epoch [% 4d/% 4d], train loss %6.4f, %5.3fsec' % (epoch+1, args.epochs, loss.item(), timeit.default_timer() - start))
 
@@ -71,10 +82,5 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=96, type=int, help='batch size')
     parser.add_argument('--data_dir', default='data', type=str)
     args = parser.parse_args()
-    if not args.num_threads:
-        args.num_threads = torch.get_num_threads()
-    else:
-        torch.set_num_threads(args.num_threads)
-    print(vars(args))
 
     mp.spawn(train, nprocs=args.processes, args=(args,))
