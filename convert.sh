@@ -5,7 +5,7 @@ source openvino/bin/activate
 #pip install --upgrade pip
 #pip install openvino_dev torchvision onnx==1.8.1
 
-#python mnist.py --epochs 10
+python mnist.py --epochs 100
 
 python infer.py --mode pytorch
 
