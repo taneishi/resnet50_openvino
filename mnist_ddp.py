@@ -11,24 +11,25 @@ from model import ConvNet
 def main(args):
     torch.manual_seed(10)
 
+    world_size = int(os.environ[args.env_size]) if args.env_size in os.environ else 1
+    rank = int(os.environ[args.env_rank]) if args.env_rank in os.environ else 0
+
     if not args.num_threads:
         args.num_threads = torch.get_num_threads()
     else:
         torch.set_num_threads(args.num_threads)
-    if process == 0:
-        print(vars(args))
 
-    world_size = int(os.environ[args.env_size]) if args.env_size in os.environ else 1
-    local_rank = int(os.environ[args.env_rank]) if args.env_rank in os.environ else 0
+    if rank == 0:
+        print(vars(args))
 
     device = torch.device('cpu')
 
     if world_size > 1:
-        print('rank: {}/{}'.format(local_rank+1, world_size))
+        print('rank: {}/{}'.format(rank+1, world_size))
         torch.distributed.init_process_group(
                 backend='gloo',
                 init_method='file://%s' % args.tmpname,
-                rank=local_rank,
+                rank=rank,
                 world_size=world_size)
 
     net = ConvNet()
@@ -79,7 +80,7 @@ def main(args):
 
             torch.distributed.barrier()
 
-        if local_rank == 0:
+        if rank == 0:
             print('epoch [% 4d/% 4d], train loss %6.4f, %5.3fsec' % (epoch+1, args.epochs, loss.item(), timeit.default_timer() - start))
 
 if __name__ == '__main__':
