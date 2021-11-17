@@ -26,7 +26,8 @@ def main(args):
             batch_size=args.batch_size,
             shuffle=False,
             num_workers=0,
-            pin_memory=True)
+            pin_memory=True,
+            drop_last=True)
 
     test_dataset = torchvision.datasets.CIFAR10(
             root=args.data_dir,
@@ -38,7 +39,8 @@ def main(args):
             batch_size=args.batch_size,
             shuffle=False,
             num_workers=0,
-            pin_memory=True)
+            pin_memory=True,
+            drop_last=True)
 
     net = torchvision.models.resnet50()
     net = net.to(device)
@@ -53,11 +55,11 @@ def main(args):
         for index, (images, labels) in enumerate(train_loader):
             print('\rbatch %d/%d' % (index, len(train_loader)), end='')
 
-            # Forward pass
+            # forward pass
             outputs = net(images)
             loss = criterion(outputs, labels)
 
-            # Backward and optimize
+            # backward and optimize
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -83,8 +85,8 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch ResNet-50 Training')
     parser.add_argument('--epochs', default=5, type=int)
-    parser.add_argument('--batch_size', default=64, type=int)
-    parser.add_argument('--data_dir', default='datasets/cifar10', type=str)
+    parser.add_argument('--batch_size', default=96, type=int)
+    parser.add_argument('--data_dir', default='data', type=str)
     parser.add_argument('--name', default='resnet-50', type=str)
     parser.add_argument('--lr', default=1e-3, type=float)
     args = parser.parse_args()

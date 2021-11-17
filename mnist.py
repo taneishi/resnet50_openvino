@@ -13,13 +13,14 @@ def main(args):
 
     transform = torchvision.transforms.ToTensor()
 
-    # Data loading code
+    # data loading code
     train_dataset = torchvision.datasets.MNIST(
             root=args.data_dir,
             train=True,
             transform=transform,
             download=True)
 
+    # model optimizer needs drop last for defined batch size
     train_loader = torch.utils.data.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
@@ -55,11 +56,11 @@ def main(args):
         for index, (images, labels) in enumerate(train_loader):
             print('\rbatch %d/%d' % (index, len(train_loader)), end='')
 
-            # Forward pass
+            # forward pass
             outputs = net(images)
             loss = criterion(outputs, labels)
 
-            # Backward and optimize
+            # backward and optimize
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
