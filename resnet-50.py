@@ -7,7 +7,6 @@ import os
 
 def main(args):
     torch.manual_seed(123)
-    device = torch.device('cpu')
 
     transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize((224, 224)),
@@ -43,7 +42,6 @@ def main(args):
             drop_last=True)
 
     net = torchvision.models.resnet50()
-    net = net.to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9)

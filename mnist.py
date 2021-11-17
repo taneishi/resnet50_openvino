@@ -9,7 +9,6 @@ from model import ConvNet
 
 def main(args):
     torch.manual_seed(123)
-    device = torch.device('cpu')
 
     transform = torchvision.transforms.ToTensor()
 
@@ -43,7 +42,6 @@ def main(args):
             drop_last=True)
 
     net = ConvNet()
-    net = net.to(device)
 
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
