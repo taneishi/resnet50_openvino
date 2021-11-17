@@ -44,7 +44,7 @@ def main(args):
     net = net.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr = args.lr, momentum=0.9)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9)
 
     for epoch in range(args.epochs):
         epoch_start = timeit.default_timer()
@@ -76,8 +76,8 @@ def main(args):
         print(' %5.3fsec' % (timeit.default_timer() - epoch_start))
 
     os.makedirs('model', exist_ok=True)
-    torch.save(net.state_dict(), 'model/resnet-50.pth')
-    torch.onnx.export(net, images, 'model/resnet-50.onnx', verbose=False)
+    torch.save(net.state_dict(), 'model/%s.pth' % args.name)
+    torch.onnx.export(net, images, 'model/%s.onnx' % args.name, verbose=False)
     print('PyTorch and ONNX models exported.')
 
 if __name__ == '__main__':
@@ -85,7 +85,8 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', default=5, type=int)
     parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--data_dir', default='datasets/cifar10', type=str)
-    parser.add_argument('--lr', default=0.001, type=float)
+    parser.add_argument('--name', default='resnet-50', type=str)
+    parser.add_argument('--lr', default=1e-3, type=float)
     args = parser.parse_args()
     print(vars(args))
 

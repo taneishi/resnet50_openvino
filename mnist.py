@@ -44,7 +44,7 @@ def main(args):
 
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), 1e-4)
+    optimizer = torch.optim.SGD(net.parameters(), lr=args.lr)
 
     for epoch in range(args.epochs):
         epoch_start = timeit.default_timer()
@@ -68,16 +68,16 @@ def main(args):
         test_loss = 0
         for images, labels in test_loader:
             with torch.no_grad():
-                output = net(images)
-            test_loss += criterion(output, labels).item() # sum up batch loss
-            pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
+                outputs = net(images)
+            test_loss += criterion(outputs, labels).item() # sum up batch loss
+            pred = outputs.argmax(dim=1, keepdim=True) # get the index of the max log-probability
 
         print(' test average loss %6.4f' % (test_loss / len(test_loader)), end='')
         print(' %5.3fsec' % (timeit.default_timer() - epoch_start))
 
     os.makedirs('model', exist_ok=True)
-    torch.save(net.state_dict(), 'model/convnet.pth')
-    torch.onnx.export(net, images, 'model/convnet.onnx', verbose=False)
+    torch.save(net.state_dict(), 'model/%s.pth' % args.name)
+    torch.onnx.export(net, images, 'model/%s.onnx' % args.name, verbose=False)
     print('PyTorch and ONNX models exported.')
 
 if __name__ == '__main__':
@@ -85,6 +85,8 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', default=5, type=int, metavar='N', help='number of total epochs to run')
     parser.add_argument('--batch_size', default=96, type=int, help='batch size')
     parser.add_argument('--data_dir', default='data', type=str)
+    parser.add_argument('--name', default='convnet', type=str)
+    parser.add_argument('--lr', default=1e-4, type=float)
     args = parser.parse_args()
     print(vars(args))
 
