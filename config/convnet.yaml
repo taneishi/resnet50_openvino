@@ -13,7 +13,7 @@ models:
       - name: mnist_csv
         annotation: annotation/mnist_csv.pickle
         dataset_meta: annotation/mnist_csv.json
-        data_source: images
+        data_source: data/MNIST/images
         reader: pillow_imread
 
         preprocessing:

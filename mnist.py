@@ -25,7 +25,8 @@ def main(args):
             batch_size=args.batch_size,
             shuffle=False,
             num_workers=0,
-            pin_memory=True)
+            pin_memory=True,
+            drop_last=True)
 
     test_dataset = torchvision.datasets.MNIST(
             root=args.data_dir,
@@ -37,7 +38,8 @@ def main(args):
             batch_size=args.batch_size,
             shuffle=False,
             num_workers=0,
-            pin_memory=True)
+            pin_memory=True,
+            drop_last=True)
 
     net = ConvNet()
     net = net.to(device)

@@ -1,22 +1,37 @@
 import torchvision
-import torchvision.transforms as transforms
 import torch
 import torch.nn as nn
 from openvino.inference_engine import IECore
-import timeit
 import argparse
-import os
+import timeit
 
 from model import ConvNet
 
 def main(args):
+    torch.manual_seed(123)
+
+    transform = torchvision.transforms.ToTensor()
+
+    # Data loading code
+    test_dataset = torchvision.datasets.MNIST(
+            root=args.data_dir,
+            train=False,
+            transform=transform,
+            download=True)
+
+    test_loader = torch.utils.data.DataLoader(
+            dataset=test_dataset,
+            batch_size=args.batch_size,
+            num_workers=0,
+            pin_memory=True,
+            drop_last=True)
+
     if args.mode == 'pytorch':
         net = ConvNet()
         net.load_state_dict(torch.load('model/convnet.pth'))
         net.eval()
 
     elif args.mode == 'fp32' or args.mode == 'int8':
-
         if args.mode == 'fp32':
             model_xml = 'model/convnet.xml'
         elif args.mode == 'int8':
@@ -39,21 +54,6 @@ def main(args):
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
 
-    # Data loading code
-    test_dataset = torchvision.datasets.MNIST(
-            root=args.data_dir,
-            train=False,
-            transform=transforms.ToTensor(),
-            download=True)
-
-    test_loader = torch.utils.data.DataLoader(
-            dataset=test_dataset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=0,
-            pin_memory=True,
-            drop_last=True)
-
     loss = 0
     start_time = timeit.default_timer()
     for index, (images, labels) in enumerate(test_loader):
@@ -67,7 +67,7 @@ def main(args):
 
         loss += criterion(outputs, labels)
 
-    print('test loss %6.4f, %5.3fsec' % (loss.item() / len(test_loader), (timeit.default_timer() - start_time)))
+    print('test loss %6.4f, %5.3fsec' % (loss.item() / len(test_loader), timeit.default_timer() - start_time))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

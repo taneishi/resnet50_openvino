@@ -3,15 +3,15 @@ import cv2
 import os
 
 def main():
-    data_dir = 'data/MNIST/raw'
-    image_dir = 'images'
+    data_dir = 'data/MNIST'
+    image_dir = '%s/images' % data_dir
     if not os.path.exists(image_dir):
         os.makedirs(image_dir, exist_ok=True)
 
-    train_image = 'train-images-idx3-ubyte'
-    train_label = 'train-labels-idx1-ubyte'
-    test_image = 't10k-images-idx3-ubyte'
-    test_label = 't10k-labels-idx1-ubyte'
+    train_image = 'raw/train-images-idx3-ubyte'
+    train_label = 'raw/train-labels-idx1-ubyte'
+    test_image = 'raw/t10k-images-idx3-ubyte'
+    test_label = 'raw/t10k-labels-idx1-ubyte'
 
     with open(os.path.join(data_dir, test_image), 'rb') as f:
         images = f.read()
@@ -28,7 +28,7 @@ def main():
 
     labels = labels[8:]
 
-    with open('val.txt', 'w') as f:
+    with open('%s/val.txt' % data_dir, 'w') as f:
         for label in labels:
             f.write('%d\n' % (label))
 
