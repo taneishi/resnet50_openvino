@@ -62,7 +62,7 @@ def main(args):
             loss.backward()
             optimizer.step()
 
-        print('epoch % 5d train loss %6.4f' % (epoch+1, loss.item()), end='')
+        print('\repoch % 5d train loss %6.4f' % (epoch+1, loss.item()), end='')
 
         net.eval()
         test_loss = 0
