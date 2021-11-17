@@ -6,8 +6,7 @@ import timeit
 import os
 
 def main(args):
-    torch.manual_seed(10)
-
+    torch.manual_seed(123)
     device = torch.device('cpu')
 
     transform = torchvision.transforms.Compose([
@@ -51,32 +50,41 @@ def main(args):
         epoch_start = timeit.default_timer()
 
         net.train()
-        for data, target in train_loader:
+        for index, (images, labels) in enumerate(train_loader):
+            print('\rbatch %d/%d' % (index, len(train_loader)), end='')
+
+            # Forward pass
+            outputs = net(images)
+            loss = criterion(outputs, labels)
+
+            # Backward and optimize
             optimizer.zero_grad()
-            output = net(data)
-            loss = criterion(output, target)
             loss.backward()
             optimizer.step()
 
-        print('epoch: % 5d train loss: %6.4f' % (epoch, loss.item()), end='')
+        print('epoch % 5d train loss %6.4f' % (epoch+1, loss.item()), end='')
 
         net.eval()
         test_loss = 0
-        for data, target in test_loader:
+        for images, labels in test_loader:
             with torch.no_grad():
-                output = net(data)
-            test_loss += criterion(output, target).item() # sum up batch loss
-            pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
+                outputs = net(images)
+            test_loss += criterion(outputs, labels).item() # sum up batch loss
+            pred = outputs.argmax(dim=1, keepdim=True) # get the index of the max log-probability
 
-        print(' test average loss: %6.4f' % (test_loss / len(test_loader)), end='')
-
+        print(' test average loss %6.4f' % (test_loss / len(test_loader)), end='')
         print(' %5.3fsec' % (timeit.default_timer() - epoch_start))
+
+    os.makedirs('model', exist_ok=True)
+    torch.save(net.state_dict(), 'model/resnet-50.pth')
+    torch.onnx.export(net, images, 'model/resnet-50.onnx', verbose=False)
+    print('PyTorch and ONNX models exported.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch ResNet-50 Training')
-    parser.add_argument('--data_dir', default='datasets/cifar10', type=str)
     parser.add_argument('--epochs', default=5, type=int)
     parser.add_argument('--batch_size', default=64, type=int)
+    parser.add_argument('--data_dir', default='datasets/cifar10', type=str)
     parser.add_argument('--lr', default=0.001, type=float)
     args = parser.parse_args()
     print(vars(args))
