@@ -6,9 +6,7 @@ import argparse
 import timeit
 
 def main(args):
-    torch.manual_seed(10)
-
-    device = torch.device('cpu')
+    torch.manual_seed(123)
 
     transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize((224, 224)),
@@ -31,14 +29,15 @@ def main(args):
 
     if args.mode == 'pytorch':
         net = torchvision.models.resnet50()
-        net = net.to(device)
+        net.load_state_dict(torch.load('public/resnet-50-pytorch/resnet50-19c8e357.pth'))
         net.eval()
 
-    elif args.mode == 'fp32' or args.mode == 'fp16':
+    elif args.mode == 'fp32' or args.mode == 'int8':
         if args.mode == 'fp32':
             model_xml = 'public/resnet-50-pytorch/FP32/resnet-50-pytorch.xml'
-        elif args.mode == 'fp16':
-            model_xml = 'public/resnet-50-pytorch/FP16/resnet-50-pytorch.xml'
+        elif args.mode == 'int8':
+            model_xml = 'public/resnet-50-pytorch/FP32/resnet-50-pytorch.xml'
+
         model_bin = model_xml.replace('xml', 'bin')
 
         print('Creating Inference Engine')
@@ -47,34 +46,36 @@ def main(args):
 
         # loading model to the plugin
         print('Loading model to the plugin')
-        exec_net = ie.load_network(network=net, num_requests=1, device_name='CPU')
+        exec_net = ie.load_network(network=net, num_requests=args.num_requests, device_name='CPU')
 
         print('Preparing input blobs')
         input_blob = next(iter(net.input_info))
         output_blob = next(iter(net.outputs))
 
+    # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
 
-    test_loss = 0
-    for index, (data, target) in enumerate(test_loader):
-        start_time = timeit.default_timer()
+    loss = 0
+    start_time = timeit.default_timer()
+    for index, (images, labels) in enumerate(test_loader):
 
         if args.mode == 'pytorch':
             with torch.no_grad():
-                outputs = net(data)
-        elif args.mode == 'fp32' or args.mode == 'fp16':
-            outputs = exec_net.infer(inputs={input_blob: data})
+                outputs = net(images)
+        elif args.mode == 'fp32' or args.mode == 'int8':
+            outputs = exec_net.infer(inputs={input_blob: images})
             outputs = torch.from_numpy(outputs[output_blob])
 
-        test_loss = criterion(outputs, target)
+        loss += criterion(outputs, labels)
 
-        print('[% 4d/% 4d] test loss: %6.3f, %5.2fsec' % (index, len(test_loader), test_loss.item(), timeit.default_timer() - start_time))
+        print('test loss %6.4f, %5.3fsec' % (loss.item() / (index + 1), timeit.default_timer() - start_time))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch ResNet-50 Ineference')
+    parser.add_argument('--num_requests', default=1, type=int)
     parser.add_argument('--batch_size', default=96, type=int)
-    parser.add_argument('--mode', choices=['pytorch', 'fp32', 'fp16'], default='pytorch', type=str)
-    parser.add_argument('--data_dir', default='datasets/cifar10', type=str)
+    parser.add_argument('--mode', choices=['pytorch', 'fp32'], default='pytorch', type=str)
+    parser.add_argument('--data_dir', default='data', type=str)
     args = parser.parse_args()
     print(vars(args))
 
