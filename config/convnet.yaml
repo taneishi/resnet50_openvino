@@ -1,5 +1,5 @@
 models:
-  - name: mnist-convnet
+  - name: convnet
 
     launchers:
       - framework: dlsdk
@@ -10,10 +10,10 @@ models:
         adapter: classification
 
     datasets:
-      - name: mnist_csv
-        annotation: annotation/mnist_csv.pickle
-        dataset_meta: annotation/mnist_csv.json
-        data_source: data/MNIST/images
+      - name: mnist
+        annotation: annotation/mnist.pickle
+        dataset_meta: annotation/mnist.json
+        data_source: data/MNIST/raw/converted_images
         reader: pillow_imread
 
         preprocessing:
@@ -21,3 +21,4 @@ models:
 
         metrics:
           - type: accuracy
+

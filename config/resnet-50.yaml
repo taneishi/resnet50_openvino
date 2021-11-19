@@ -1,0 +1,31 @@
+models:
+  - name: resnet-50
+
+    launchers:
+      - framework: dlsdk
+        device: CPU
+
+        model: resnet-50-pytorch.xml
+        weights: resnet-50-pytorch.bin
+        adapter: classification
+
+    datasets:
+      - name: cifar
+        annotation: annotation/cifar.pickle
+        dataset_meta: annotation/cifar.json
+        data_source: data/cifar-10-batches-py/converted_images
+        reader: pillow_imread
+
+        preprocessing:
+          - type: resize
+            size: 224
+            aspect_ratio_scale: greater
+            use_pillow: True
+            interpolation: BILINEAR
+
+          - type: normalization
+            mean: (0.5, 0.5, 0.5) 
+            std: (0.5, 0.5, 0.5)
+
+        metrics:
+          - type: accuracy

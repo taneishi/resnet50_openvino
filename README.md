@@ -79,17 +79,14 @@ So far only pytorch, fp32, and int8 are supported for mode argument.
 
 ### Model Quantization
 
-The last step is to quantize the optimized model as input. In MNIST, the following script is used to extract the data for calibration, which is stored in `data/MNIST` by default.
-
-```bash
-python mnist_dump.py
-```
-
-In addition, to give the quantization script the correspondence between the validation data and their labels, we generate annotations using the following converter script. Here, the annotation definition of `convnet_csv` is pre-defined in OpenVINO. It is also possible to create user-defined annotations (ref. https://github.com/taneishi/CheXNet). Created annotations are stored as `convnet_csv.pickle` and `convnet_csv.json` under the `annotation` directory.
+The last step is to quantize the optimized model as input. 
+In MNIST, to give the quantization script the validation data and their labels, you can generate images and annotations using the following converter script. Here, the annotation definition of `mnist` is pre-defined in OpenVINO. It is also possible to create user-defined annotations (ref. https://github.com/taneishi/CheXNet). Created annotations are stored as `mnist.pickle` and `mnist.json` under the `annotation` directory.
 
 ```bash
 mkdir -p annotation
-convert_annotation convnet_csv --annotation_file data/MNIST/val.txt -o annotation
+convert_annotation mnist -o annotation --convert_images 1 \
+        --labels_file data/MNIST/raw/t10k-labels-idx1-ubyte.gz \
+        --images_file data/MNIST/raw/t10k-images-idx3-ubyte.gz
 ```
 
 In OpenVINO quantization, the location of the optimization model, the quantization method, the location of the data for calibration, accuracy metric, etc. must be specified in a configuration file in JSON or YAML format. You can find these config files in `config` directory. Once the configuration files are ready, run the quantization script `pot`.

@@ -12,23 +12,20 @@ fi
 
 if [ ! -f model/convnet.onnx ]
 then
-    python mnist.py --epochs 100
+    python convnet.py --epochs 100
 fi
 
-python mnist_infer.py --mode pytorch
+python convnet_infer.py --mode pytorch
 
 mo --input_model model/convnet.onnx --output_dir model
-python mnist_infer.py --mode fp32
+python convnet_infer.py --mode fp32
 
 mkdir -p annotation
-convert_annotation mnist_csv --annotation_file data/MNIST/val.txt -o annotation
-
-if [ ! -d data/MNIST/images ]
-then
-    python mnist_dump.py
-fi
+convert_annotation mnist -o annotation --convert_images 1 \
+        --labels_file data/MNIST/raw/t10k-labels-idx1-ubyte.gz \
+        --images_file data/MNIST/raw/t10k-images-idx3-ubyte.gz
 
 pot -c config/pot.yaml
 mkdir -p model/INT8
 cp $(ls results/convnet_DefaultQuantization/*/optimized/* | tail -3) model/INT8
-python mnist_infer.py --mode int8
+python convnet_infer.py --mode int8

@@ -1,0 +1,14 @@
+model:
+  model_name: resnet-50
+  model: public/resnet-50-pytorch/FP32/resnet-50-pytorch.xml
+  weights: public/resnet-50-pytorch/FP32/resnet-50-pytorch.bin
+
+engine:
+  config: config/resnet-50.yaml
+
+compression:
+  algorithms:
+  - name: DefaultQuantization
+    params:
+      preset: mixed
+      stat_subset_size: 960
