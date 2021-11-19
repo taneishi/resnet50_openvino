@@ -9,8 +9,7 @@ def main():
 
     data_dir = 'data/MNIST'
     image_dir = '%s/images' % data_dir
-    if not os.path.exists(image_dir):
-        os.makedirs(image_dir, exist_ok=True)
+    os.makedirs(image_dir, exist_ok=True)
 
     test_dataset = torchvision.datasets.MNIST(
             root='data',

@@ -21,7 +21,7 @@ pip install --upgrade pip
 pip install openvino_dev torchvision onnx
 ```
 
-`mnist_convert.sh`, which will be introduced later, will build an environment automatically if the virtual environment does not exist.
+`convnet_convert.sh`, which will be introduced later, will build an environment automatically if the virtual environment does not exist.
 
 ## Build a trained model and optimize and quantize the model.
 
@@ -29,10 +29,10 @@ pip install openvino_dev torchvision onnx
 
 You can download pre-trained models for ResNet-50 in Model Zoo, but user-defined models need to be trained first. The following script will train ConvNet on the MNIST dataset and save the trained model.
 
-Since OpenVINO cannot directly convert the PyTorch model format, you need to save the model in the portable ONNX format in addition to the PyTorch format. In this process, since the model is saved with the dimension including the last batch number, it is needed to specify `drop_last=True` in `mnist.py` script and discard the remainder of the data. The default destination of the trained model is `model/convnet.pth` and `model/convnet.onnx`. The file names can be changed with the `name` argument.
+Since OpenVINO cannot directly convert the PyTorch model format, you need to save the model in the portable ONNX format in addition to the PyTorch format. In this process, since the model is saved with the dimension including the last batch number, it is needed to specify `drop_last=True` in `convnet.py` script and discard the remainder of the data. The default destination of the trained model is `model/convnet.pth` and `model/convnet.onnx`. The file names can be changed with the `name` argument.
 
 ```bash
-python mnist.py --epochs 100
+python convnet.py --epochs 100
 ```
 
 For ResNet-50, you can download the model with the following command. If the above environment has been built, the script to download the models is added to the execution path of venv. The destination of the trained models is `public/resnet-50-pytorch/resnet50-19c8e357.pth`.
@@ -44,7 +44,7 @@ omz_downloader --name resnet-50-pytorch
 Now that you have a trained model, you can run PyTorch inference on it. The `mode` argument specifies `pytorch`, but it defaults to `pytorch`, so you can run it without it.
 
 ```bash
-python mnist_infer.py --mode pytorch
+python convnet_infer.py --mode pytorch
 python resnet-50_infer.py
 ```
 
@@ -71,7 +71,7 @@ By the conversion script, the models in ONNX format, FP32, FP16, and FP16-INT8 w
 To run inference with optimized models, set the `mode` argument of the inference script to `fp32`.
 
 ```bash
-python mnist_infer.py --mode fp32
+python convnet_infer.py --mode fp32
 python resnet-50_infer.py --mode fp32
 ```
 
@@ -82,14 +82,14 @@ So far only pytorch, fp32, and int8 are supported for mode argument.
 The last step is to quantize the optimized model as input. In MNIST, the following script is used to extract the data for calibration, which is stored in `data/MNIST` by default.
 
 ```bash
-python extract_images.py
+python mnist_dump.py
 ```
 
-In addition, to give the quantization script the correspondence between the validation data and their labels, we generate annotations using the following converter script. Here, the annotation definition of `mnist_csv` is pre-defined in OpenVINO. It is also possible to create user-defined annotations (ref. https://github.com/taneishi/CheXNet). Created annotations are stored as `mnist_csv.pickle` and `mnist_csv.json` under the `annotation` directory.
+In addition, to give the quantization script the correspondence between the validation data and their labels, we generate annotations using the following converter script. Here, the annotation definition of `convnet_csv` is pre-defined in OpenVINO. It is also possible to create user-defined annotations (ref. https://github.com/taneishi/CheXNet). Created annotations are stored as `convnet_csv.pickle` and `convnet_csv.json` under the `annotation` directory.
 
 ```bash
 mkdir -p annotation
-convert_annotation mnist_csv --annotation_file data/MNIST/val.txt -o annotation
+convert_annotation convnet_csv --annotation_file data/MNIST/val.txt -o annotation
 ```
 
 In OpenVINO quantization, the location of the optimization model, the quantization method, the location of the data for calibration, accuracy metric, etc. must be specified in a configuration file in JSON or YAML format. You can find these config files in `config` directory. Once the configuration files are ready, run the quantization script `pot`.
@@ -103,13 +103,13 @@ If the script succeeds, the quantized models `convnet.xml`, `convnet.bin`, and `
 You can move the generated quantized model files to `model/INT8` and run the inference script with `int8` as the `mode` argument.
 
 ```bash
-python mnist_infer.py --mode int8
+python convnet_infer.py --mode int8
 ```
 
 You can use the following script to perform all the operations on ConvNet.
 
 ```bash
-bash mnist_convert.sh
+bash convnet_convert.sh
 ```
 
 ## TODO

@@ -23,6 +23,11 @@ python mnist_infer.py --mode fp32
 mkdir -p annotation
 convert_annotation mnist_csv --annotation_file data/MNIST/val.txt -o annotation
 
+if [ ! -d data/MNIST/images ]
+then
+    python mnist_dump.py
+fi
+
 pot -c config/pot.yaml
 mkdir -p model/INT8
 cp $(ls results/convnet_DefaultQuantization/*/optimized/* | tail -3) model/INT8

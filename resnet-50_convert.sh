@@ -19,3 +19,4 @@ omz_converter --name resnet-50-pytorch
 #        --input=data '--mean_values=data[123.675,116.28,103.53]' '--scale_values=data[58.395,57.12,57.375]' \
 #        --reverse_input_channels --output=prob --input_model=public/resnet-50-pytorch/resnet-v1-50.onnx
 
+convert_annotation cifar -o annotation --data_batch_file data/cifar-10-batches-py/test_batch
