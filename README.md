@@ -108,7 +108,3 @@ You can use the following script to perform all the operations on ConvNet.
 ```bash
 bash convnet_convert.sh
 ```
-
-## TODO
-
-- [ ] ResNet-50 quantization
