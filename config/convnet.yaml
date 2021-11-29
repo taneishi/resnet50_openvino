@@ -11,13 +11,15 @@ models:
 
     datasets:
       - name: mnist
-        annotation: annotation/mnist.pickle
-        dataset_meta: annotation/mnist.json
-        data_source: data/MNIST/raw/converted_images
+        annotation: annotation/cifar.pickle
+        dataset_meta: annotation/cifar.json
+        data_source: data/cifar-10-batches-py/converted_images
         reader: pillow_imread
 
         preprocessing:
-          - type: rgb_to_gray  
+          - type: normalization
+            mean: (0.5, 0.5, 0.5) 
+            std: (0.5, 0.5, 0.5)
 
         metrics:
           - type: accuracy

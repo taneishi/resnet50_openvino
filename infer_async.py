@@ -26,7 +26,7 @@ def main(args):
     criterion = nn.CrossEntropyLoss()
 
     # Data loading code
-    test_dataset = torchvision.datasets.MNIST(
+    test_dataset = torchvision.datasets.CIFAR10(
             root=args.data_dir,
             train=False,
             transform=transforms.ToTensor(),
