@@ -2,13 +2,19 @@
 
 ## Overview
 
-Unlike training, which involves many epochs of iteration, inference in deep learning uses a pre-trained model and processes the input only once. In this case, the weights of the model are not updated, so the computational load is lighter than in training.
+Unlike training, which involves many epochs of iteration, inference in deep learning uses a pre-trained model and processes the input only once. 
+In this case, the weights of the model are not updated, so the computational load is lighter than in training.
 
-On the other hand, in terms of the hardware environment in which inference is performed, it includes edge computing, where expensive accelerators represented by GPUs and high performance processors cannot be expected. In addition, real-time processing is sometimes required such as image recognition application for camera input, and it would be useful to have a acceleration method specific to inference.
+On the other hand, in terms of the hardware environment in which inference is performed, it includes edge computing, where expensive accelerators represented by GPUs and high performance processors cannot be expected. 
+In addition, real-time processing is sometimes required such as image recognition application for camera input, and it would be useful to have a acceleration method specific to inference.
 
-Among such acceleration methods for inference, OpenVINO is a toolkit provided by Intel mainly for their processor products. OpenVINO acceleration consists of two parts: model optimization and quantization. Model optimization makes models more efficient by eliminating unnecessary operations in inference. Quantization improves speed by converting the weights of the floating point representation into an 8-bit integer representation. Unlike model optimization, quantization requires accuracy calibration because it changes the results of inference.
+Among such acceleration methods for inference, OpenVINO is a toolkit provided by Intel mainly for their processor products. 
+OpenVINO acceleration consists of two parts: model optimization and quantization. Model optimization makes models more efficient by eliminating unnecessary operations in inference. 
+Quantization improves speed by converting the weights of the floating point representation into an 8-bit integer representation. 
+Unlike model optimization, quantization requires accuracy calibration because it changes the results of inference.
 
-In this repository, you will find an example of speeding up inference using OpenVINO, using image recognition with an user-defined model as an example. The user-defined model is ConvNet defined in `model.py` and the dataset used is CIFAR10.
+In this repository, you will find an example of speeding up inference using OpenVINO, using image recognition with an user-defined model as an example. 
+The user-defined model is ConvNet defined in `model.py` and the dataset used is CIFAR10.
 
 ## Environments
 
@@ -29,7 +35,9 @@ pip install openvino_dev torchvision onnx
 
 An user-defined model need to be trained first. The following script will train ConvNet on the CIFAR10 dataset and save the trained model.
 
-Since OpenVINO cannot directly convert the PyTorch model format, you need to save the model in the portable ONNX format in addition to the PyTorch format. In this process, since the model is saved with the dimension including the last batch number, it is needed to specify `drop_last=True` in `train.py` script and discard the remainder of the data. The default destination of the trained model is `model/convnet.pth` and `model/convnet.onnx`. The file names can be changed with the `name` argument.
+Since OpenVINO cannot directly convert the PyTorch model format, you need to save the model in the portable ONNX format in addition to the PyTorch format. 
+In this process, since the model is saved with the dimension including the last batch number, it is needed to specify `drop_last=True` in `train.py` script and discard the remainder of the data. 
+The default destination of the trained model is `model/convnet.pth` and `model/convnet.onnx`. The file names can be changed with the `name` argument.
 
 ```bash
 python train.py --epochs 100
@@ -64,7 +72,9 @@ So far only pytorch, fp32, and int8 are supported for mode argument.
 ### Model Quantization
 
 The last step is to quantize the optimized model as input. 
-In CIFAR10, to give the quantization script the validation data and their labels, you can generate images and annotations using the following converter script. Here, the annotation definition of `cifar` is pre-defined in OpenVINO. It is also possible to create user-defined annotations (ref. https://github.com/taneishi/CheXNet). Created annotations are stored as `cifar.pickle` and `cifar.json` under the `annotation` directory.
+In CIFAR10, to give the quantization script the validation data and their labels, you can generate images and annotations using the following converter script. 
+Here, the annotation definition of `cifar` is pre-defined in OpenVINO. It is also possible to create user-defined annotations (ref. [CheXNet](https://github.com/taneishi/CheXNet)). 
+Created annotations are stored as `cifar.pickle` and `cifar.json` under the `annotation` directory.
 
 ```bash
 mkdir -p annotation
@@ -72,13 +82,15 @@ convert_annotation cifar -o annotation --convert_images 1 \
         --data_batch_file data/cifar-10-batches-py/test_batch
 ```
 
-In OpenVINO quantization, the location of the optimization model, the quantization method, the location of the data for calibration, accuracy metric, etc. must be specified in a configuration file in JSON or YAML format. You can find these config files in `config` directory. Once the configuration files are ready, run the quantization script `pot`.
+In OpenVINO quantization, the location of the optimization model, the quantization method, the location of the data for calibration, accuracy metric, etc. must be specified in a configuration file in JSON or YAML format. 
+You can find these config files in `config` directory. Once the configuration files are ready, run the quantization script `pot`.
 
 ```bash
 pot -c config/pot.yaml
 ```
 
-If the script succeeds, the quantized models `convnet.xml`, `convnet.bin`, and `convnet.mapping` will be generated under `results/convnet_DefaultQuantization/[date time]/optimized`. The [date time] is set from the date and time of execution.
+If the script succeeds, the quantized models `convnet.xml`, `convnet.bin`, and `convnet.mapping` will be generated under `results/convnet_DefaultQuantization/[date time]/optimized`. 
+The `[date time]` is set from the date and time of execution.
 
 You can move the generated quantized model files to `model/INT8` and run the inference script with `int8` as the `mode` argument.
 
