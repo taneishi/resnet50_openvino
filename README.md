@@ -27,7 +27,7 @@ pip install --upgrade pip
 pip install openvino_dev torchvision onnx
 ```
 
-`convert.sh`, which will be introduced later, will build an environment automatically if the virtual environment does not exist.
+`run.sh`, which will be introduced later, will build an environment automatically if the virtual environment does not exist.
 
 ## Build a trained model and optimize and quantize the model.
 
@@ -101,5 +101,5 @@ python infer.py --mode int8
 You can use the following script to perform all the operations on ConvNet.
 
 ```bash
-bash convert.sh
+bash run.sh
 ```
