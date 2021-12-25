@@ -1,14 +1,14 @@
 model:
-  model_name: convnet
-  model: model/convnet.xml
-  weights: model/convnet.bin
+  model_name: resnet-50
+  model: model/resnet-50.xml
+  weights: model/resnet-50.bin
 
 engine:
-  config: config/convnet.yaml
+  config: config/resnet-50.yaml
 
 compression:
   algorithms:
   - name: DefaultQuantization
     params:
       preset: mixed
-      stat_subset_size: 960
+      stat_subset_size: 100
