@@ -1,0 +1,44 @@
+models:
+  - name: resnet-50
+
+    launchers:
+      - framework: dlsdk
+        device: CPU
+
+        model: model/resnet-50.xml
+        weights: model/resnet-50.bin
+        adapter: classification
+
+    datasets:
+      - name: images
+        annotation: images.pickle
+        dataset_meta: images.json
+        data_source: images
+        reader: pillow_imread
+
+        preprocessing:
+          - type: resize
+            size: 256
+            aspect_ratio_scale: greater
+            use_pillow: True
+            interpolation: BILINEAR
+
+          - type: crop
+            size: 224
+            use_pillow: True
+
+          - type: normalization
+            std: 255
+
+          - type: normalization
+            mean: (0.485, 0.456, 0.406) 
+            std: (0.229, 0.224, 0.225)
+
+        metrics:
+          - name: accuracy@top1
+            type: accuracy
+            top_k: 1
+
+          - name: accuracy@top5
+            type: accuracy
+            top_k: 5
