@@ -1,23 +1,29 @@
 import torchvision
 import torch
+from torch.utils.data import Dataset
 import torch.nn as nn
+import numpy as np
+from sklearn import metrics
 from openvino.inference_engine import IECore
 import argparse
 import timeit
 
-from model import ConvNet
+from datasets import ImageNetDataSet
 
 def main(args):
     torch.manual_seed(123)
 
-    transform = torchvision.transforms.ToTensor()
+    transform = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((224, 224)),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
 
     # Data loading code
-    test_dataset = torchvision.datasets.CIFAR10(
-            root=args.data_dir,
-            train=False,
+    test_dataset = ImageNetDataSet(
+            data_dir='images',
             transform=transform,
-            download=True)
+            )
 
     test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,
@@ -26,16 +32,15 @@ def main(args):
             pin_memory=True,
             drop_last=True)
 
-    if args.mode == 'pytorch':
-        net = ConvNet()
-        net.load_state_dict(torch.load('model/convnet.pth'))
+    if args.mode == 'torch':
+        net = torchvision.models.resnet50(pretrained=True)
         net.eval()
 
     elif args.mode == 'fp32' or args.mode == 'int8':
         if args.mode == 'fp32':
-            model_xml = 'model/convnet.xml'
+            model_xml = 'model/resnet-50.xml'
         elif args.mode == 'int8':
-            model_xml = 'model/INT8/convnet.xml'
+            model_xml = 'model/INT8/resnet-50.xml'
 
         model_bin = model_xml.replace('xml', 'bin')
 
@@ -55,10 +60,11 @@ def main(args):
     criterion = nn.CrossEntropyLoss()
 
     loss = 0
-    start_time = timeit.default_timer()
+    y_true, y_pred = [], []
     for index, (images, labels) in enumerate(test_loader):
+        start_time = timeit.default_timer()
 
-        if args.mode == 'pytorch':
+        if args.mode == 'torch':
             with torch.no_grad():
                 outputs = net(images)
         elif args.mode == 'fp32' or args.mode == 'int8':
@@ -67,13 +73,17 @@ def main(args):
 
         loss += criterion(outputs, labels)
 
-    print('test loss %6.4f, %5.3fsec' % (loss.item() / len(test_loader), timeit.default_timer() - start_time))
+        y_true += labels
+        y_pred += np.argmax(outputs, axis=1)
+        acc = metrics.accuracy_score(y_true, y_pred)
+        print('[% 3d/% 3d] test acc %5.3f' % (index, len(test_loader), acc), end='')
+        print(' test loss %6.4f, %5.3fsec' % (loss.item() / len(test_loader), timeit.default_timer() - start_time))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_requests', default=1, type=int)
-    parser.add_argument('--batch_size', default=96, type=int)
-    parser.add_argument('--mode', choices=['pytorch', 'fp32', 'int8'], default='pytorch', type=str)
+    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--mode', choices=['torch', 'fp32', 'int8'], default='torch', type=str)
     parser.add_argument('--data_dir', default='data', type=str)
     args = parser.parse_args()
     print(vars(args))

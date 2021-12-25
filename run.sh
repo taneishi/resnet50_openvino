@@ -1,7 +1,6 @@
 #!/bin/bash
 
-if [ ! -d openvino ]
-then
+if [ ! -d openvino ]; then
     python3 -m venv openvino
     source openvino/bin/activate
     pip install --upgrade pip
@@ -10,21 +9,32 @@ else
     source openvino/bin/activate
 fi
 
-if [ ! -f model/convnet.onnx ]
-then
-    python train.py --epochs 100
+if [ ! -d images ]; then
+    git clone https://github.com/EliSchwartz/imagenet-sample-images images
 fi
 
-python infer.py --mode pytorch
+if [ ! -f imagenet_classes.txt ]; then
+    wget -c https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt
+fi
 
-mo --input_model model/convnet.onnx --output_dir model
+if [ ! -f model/resnet-50.onnx ]; then
+    python export_onnx.py
+fi
+
+if [ ! -f images.json ]; then
+    python annotation.py images --data_dir images
+fi
+
+if [ ! -f model/resnet-50.xml ]; then 
+    mo --input_model model/resnet-50.onnx --output_dir model
+fi
+
+if [ ! -f model/INT8/resnet-50.xml ]; then
+    pot -c config/pot.yaml
+    mkdir -p model/INT8
+    cp $(ls results/resnet-50_DefaultQuantization/*/optimized/* | tail -3) model/INT8
+fi
+
+python infer.py
 python infer.py --mode fp32
-
-mkdir -p annotation
-convert_annotation cifar -o annotation --convert_images 1 \
-        --data_batch_file data/cifar-10-batches-py/test_batch
-
-pot -c config/pot.yaml
-mkdir -p model/INT8
-cp $(ls results/convnet_DefaultQuantization/*/optimized/* | tail -3) model/INT8
 python infer.py --mode int8
