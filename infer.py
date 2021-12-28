@@ -8,7 +8,7 @@ from openvino.inference_engine import IECore
 import argparse
 import timeit
 
-from datasets import ImageNetDataSet
+from datasets import ImagesDataset
 
 def main(args):
     torch.manual_seed(123)
@@ -20,8 +20,8 @@ def main(args):
         ])
 
     # Data loading code
-    test_dataset = ImageNetDataSet(
-            data_dir='images',
+    test_dataset = ImagesDataset(
+            data_dir=args.data_dir,
             transform=transform,
             )
 
@@ -38,9 +38,9 @@ def main(args):
 
     elif args.mode == 'fp32' or args.mode == 'int8':
         if args.mode == 'fp32':
-            model_xml = 'model/resnet-50.xml'
+            model_xml = '%s/%s.xml' % (args.model_dir, args.model_name)
         elif args.mode == 'int8':
-            model_xml = 'model/INT8/resnet-50.xml'
+            model_xml = '%s/INT8/%s.xml' % (args.model_dir, args.model_name)
 
         model_bin = model_xml.replace('xml', 'bin')
 
@@ -56,7 +56,7 @@ def main(args):
         input_blob = next(iter(net.input_info))
         output_blob = next(iter(net.outputs))
 
-    # define loss function (criterion) and optimizer
+    # define loss function (criterion)
     criterion = nn.CrossEntropyLoss()
 
     loss = 0
@@ -84,7 +84,9 @@ if __name__ == '__main__':
     parser.add_argument('--num_requests', default=1, type=int)
     parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--mode', choices=['torch', 'fp32', 'int8'], default='torch', type=str)
-    parser.add_argument('--data_dir', default='data', type=str)
+    parser.add_argument('--data_dir', default='images', type=str)
+    parser.add_argument('--model_dir', default='model', type=str)
+    parser.add_argument('--model_name', default='resnet-50', type=str)
     args = parser.parse_args()
     print(vars(args))
 

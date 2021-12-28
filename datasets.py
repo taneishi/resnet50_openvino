@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 import os
 
-class ImageNetDataSet(Dataset):
+class ImagesDataset(Dataset):
     def __init__(self, data_dir, transform=None):
 
         image_names = []

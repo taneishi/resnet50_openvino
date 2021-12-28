@@ -7,42 +7,47 @@ import timeit
 import argparse
 import os
 
-from model import ConvNet
+from datasets import ImagesDataset
 
 def main(args):
-    model_xml = 'model/INT8/convnet.xml'
+    torch.manual_seed(123)
 
+    transform = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((224, 224)),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+
+    # Data loading code
+    test_dataset = ImagesDataset(
+            data_dir=args.data_dir,
+            transform=transform,
+            )
+
+    test_loader = torch.utils.data.DataLoader(
+            dataset=test_dataset,
+            batch_size=args.batch_size,
+            num_workers=0,
+            pin_memory=True,
+            drop_last=True)
+
+    model_xml = '%s/INT8/%s.xml' % (args.model_dir, args.model_name)
     model_bin = model_xml.replace('xml', 'bin')
 
     print('Creating Inference Engine')
     ie = IECore()
     net = ie.read_network(model=model_xml, weights=model_bin)
 
+    # loading model to the plugin
+    print('Loading model to the plugin')
+    exec_net = ie.load_network(network=net, num_requests=len(test_loader), device_name='CPU')
+
     print('Preparing input blobs')
     input_blob = next(iter(net.input_info))
     output_blob = next(iter(net.outputs))
 
-    # define loss function (criterion) and optimizer
+    # define loss function (criterion)
     criterion = nn.CrossEntropyLoss()
-
-    # Data loading code
-    test_dataset = torchvision.datasets.CIFAR10(
-            root=args.data_dir,
-            train=False,
-            transform=transforms.ToTensor(),
-            download=True)
-
-    test_loader = torch.utils.data.DataLoader(
-            dataset=test_dataset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=0,
-            pin_memory=True,
-            drop_last=True)
-
-    # loading model to the plugin
-    print('Loading model to the plugin')
-    exec_net = ie.load_network(network=net, num_requests=len(test_loader), device_name='CPU')
 
     loss = 0
     start_time = timeit.default_timer()
@@ -74,8 +79,10 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_requests', default=1, type=int)
-    parser.add_argument('--batch_size', default=96, type=int)
-    parser.add_argument('--data_dir', default='data', type=str)
+    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--data_dir', default='images', type=str)
+    parser.add_argument('--model_dir', default='model', type=str)
+    parser.add_argument('--model_name', default='resnet-50', type=str)
     args = parser.parse_args()
     print(vars(args))
 
