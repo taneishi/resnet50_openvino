@@ -16,8 +16,8 @@ Unlike model optimization, quantization changes the results of inference, so acc
 It is also possible to perform only model optimization.
 
 In this section, I use image recognition as an example to show how OpenVINO can be used to speed up inference. 
-For the image recognition model, I use ResNet-50 provided by torchvision, and for the dataset, 
-I use a sampling dataset with labels defined according to ImageNet, a dataset for image recognition.
+For the image recognition model, I use *ResNet-50* provided by torchvision, and for the dataset, 
+I use a sampling dataset with labels defined according to *ImageNet*, a dataset for image recognition.
 
 ## Execution environment
 
@@ -89,7 +89,7 @@ python annotation.py images --data_dir images
 ```
 
 In OpenVINO quantization, the location of the optimization model, the quantization method, the location of the test data for calibration, the index, etc. are specified in a configuration file in JSON or YAML format. 
-The configuration files for ResNet-50 are saved in `resnet-50.yaml` and `pot.yaml` under config in advance. 
+The configuration files for *ResNet-50* are saved in `resnet-50.yaml` and `pot.yaml` under config in advance. 
 When the configuration files are ready, run the quantization script `pot`.
 
 ```python
@@ -104,7 +104,7 @@ You can move the generated quantized model file to the directory under `model/IN
 python infer.py --mode int8
 ```
 
-The operations on ResNet-50 up to this point can be summarized in the following script.
+The operations on *ResNet-50* up to this point can be summarized in the following script.
 
 ```bash
 bash run.sh
