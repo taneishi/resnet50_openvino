@@ -57,11 +57,11 @@ def main(args):
         output_blob = next(iter(net.outputs))
 
     # define loss function (criterion)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(reduction='mean')
 
     loss = 0
     y_true, y_pred = [], []
-    for index, (images, labels) in enumerate(test_loader):
+    for index, (images, labels) in enumerate(test_loader, 1):
         start_time = timeit.default_timer()
 
         if args.mode == 'torch':
@@ -77,7 +77,7 @@ def main(args):
         y_pred += np.argmax(outputs, axis=1)
         acc = metrics.accuracy_score(y_true, y_pred)
         print('[% 3d/% 3d] test acc %5.3f' % (index, len(test_loader), acc), end='')
-        print(' test loss %6.4f, %5.3fsec' % (loss.item() / len(test_loader), timeit.default_timer() - start_time))
+        print(' test loss %6.4f, %5.3fsec' % (loss.item() / index, timeit.default_timer() - start_time))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

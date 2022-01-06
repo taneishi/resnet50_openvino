@@ -1,7 +1,9 @@
+import numpy as np
 import torchvision
 import torchvision.transforms as transforms
 import torch
 import torch.nn as nn
+from sklearn import metrics
 from openvino.inference_engine import IECore, StatusCode
 import timeit
 import argparse
@@ -40,25 +42,32 @@ def main(args):
 
     # loading model to the plugin
     print('Loading model to the plugin')
-    exec_net = ie.load_network(network=net, num_requests=len(test_loader), device_name='CPU')
+    exec_net = ie.load_network(network=net, num_requests=args.num_requests, device_name='CPU')
 
     print('Preparing input blobs')
     input_blob = next(iter(net.input_info))
     output_blob = next(iter(net.outputs))
 
     # define loss function (criterion)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(reduction='mean')
 
+    queue = [0] * args.num_requests
+    labels = list(range(args.num_requests))
+    y_true, y_pred = [], []
     loss = 0
+
     start_time = timeit.default_timer()
-    for index, (images, labels) in enumerate(test_loader):
-        exec_net.requests[index].async_infer(inputs={input_blob: images})
-
-    output_queue = list(range(args.num_requests))
-
     # wait the latest inference executions
-    while True:
-        for index in output_queue:
+    while len(y_true) < len(test_loader):
+        for index in range(args.num_requests):
+            if len(y_true) == len(test_loader):
+                break
+
+            if queue[index] == 0: 
+                images, labels[index] = next(iter(test_loader))
+                exec_net.requests[index].async_infer(inputs={input_blob: images})
+                queue[index] = 1
+
             infer_status = exec_net.requests[index].wait(0)
 
             if infer_status == StatusCode.RESULT_NOT_READY:
@@ -67,18 +76,20 @@ def main(args):
             if infer_status == StatusCode.OK:
                 outputs = exec_net.requests[index].output_blobs[output_blob].buffer
                 outputs = torch.from_numpy(outputs)
-                loss += criterion(outputs, labels)
+                loss += criterion(outputs, labels[index])
+                y_true.append(labels[index])
+                y_pred.append(np.argmax(outputs, axis=1))
+                queue[index] = 0
 
-                output_queue.remove(index)
-
-        if len(output_queue) == 0:
-            break
-
-    print('test loss %6.4f, %5.3fsec' % (loss.item() / len(test_loader), (timeit.default_timer() - start_time)))
+    y_true = torch.cat(y_true)
+    y_pred = torch.cat(y_pred)
+    acc = metrics.accuracy_score(y_true, y_pred)
+    print('test acc %5.3f test loss %6.4f,' % (acc, (loss.item() / len(test_loader))), end='')
+    print(' %5.3fsec' % (timeit.default_timer() - start_time))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_requests', default=1, type=int)
+    parser.add_argument('--num_requests', default=4, type=int)
     parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--data_dir', default='images', type=str)
     parser.add_argument('--model_dir', default='model', type=str)
