@@ -42,9 +42,10 @@ def main(args):
 
         y_true = torch.FloatTensor()
         y_pred = torch.FloatTensor()
+        train_loss = 0
         net.train()
         for index, (images, labels) in enumerate(train_loader):
-            print('\rbatch %d/%d' % (index, len(train_loader)), end='')
+            print('\rbatch % 2d/% 2d' % (index, len(train_loader)), end='')
 
             # forward pass
             outputs = net(images)
@@ -54,13 +55,14 @@ def main(args):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            train_loss += loss.item()
 
             pred = outputs.argmax(dim=1, keepdim=True) # get the index of the max log-probability
             y_true = torch.cat((y_true, labels))
             y_pred = torch.cat((y_pred, pred))
 
         train_acc = accuracy_score(y_true, y_pred)
-        print('\repoch % 5d train loss %6.4f acc %5.3f' % (epoch+1, loss.item(), train_acc), end='')
+        print('\repoch % 5d train loss %6.4f acc %5.3f' % (epoch+1, train_loss / len(train_loader), train_acc), end='')
 
         print(' %5.3fsec' % (timeit.default_timer() - epoch_start))
 
