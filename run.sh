@@ -1,12 +1,12 @@
 #!/bin/bash
 
-if [ ! -d openvino ]; then
+if [ -d openvino ]; then
+    source openvino/bin/activate
+else
     python3 -m venv openvino
     source openvino/bin/activate
     pip install --upgrade pip
     pip install openvino_dev torchvision onnx
-else
-    source openvino/bin/activate
 fi
 
 if [ ! -d images ]; then
