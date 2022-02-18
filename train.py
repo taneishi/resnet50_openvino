@@ -12,6 +12,9 @@ from datasets import ImagesDataset
 def main(args):
     torch.manual_seed(123)
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Using %s device' % (device))
+
     transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize((224, 224)),
         torchvision.transforms.ToTensor(),
@@ -32,6 +35,7 @@ def main(args):
             drop_last=True)
 
     net = torchvision.models.resnet50()
+    net = net.to(device)
 
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -45,7 +49,10 @@ def main(args):
         train_loss = 0
         net.train()
         for index, (images, labels) in enumerate(train_loader):
-            print('\rbatch % 2d/% 2d' % (index, len(train_loader)), end='')
+            print('\rbatch %3d/%3d' % (index, len(train_loader)), end='')
+
+            images = images.to(device)
+            labels = labels.to(device)
 
             # forward pass
             outputs = net(images)
@@ -58,8 +65,8 @@ def main(args):
             train_loss += loss.item()
 
             pred = outputs.argmax(dim=1, keepdim=True) # get the index of the max log-probability
-            y_true = torch.cat((y_true, labels))
-            y_pred = torch.cat((y_pred, pred))
+            y_true = torch.cat((y_true, labels.cpu()))
+            y_pred = torch.cat((y_pred, pred.cpu()))
 
         train_acc = accuracy_score(y_true, y_pred)
         print('\repoch % 5d train loss %6.4f acc %5.3f' % (epoch+1, train_loss / len(train_loader), train_acc), end='')
