@@ -62,15 +62,14 @@ def main(args):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            train_loss += loss.item()
 
+            train_loss += loss.item()
             pred = outputs.argmax(dim=1, keepdim=True) # get the index of the max log-probability
             y_true = torch.cat((y_true, labels.cpu()))
             y_pred = torch.cat((y_pred, pred.cpu()))
 
         train_acc = accuracy_score(y_true, y_pred)
         print('\repoch % 5d train loss %6.4f acc %5.3f' % (epoch+1, train_loss / len(train_loader), train_acc), end='')
-
         print(' %5.3fsec' % (timeit.default_timer() - epoch_start))
 
     os.makedirs(args.model_dir, exist_ok=True)
