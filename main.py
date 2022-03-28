@@ -76,8 +76,8 @@ def main(args):
         y_true += labels
         y_pred += np.argmax(outputs, axis=1)
         acc = metrics.accuracy_score(y_true, y_pred)
-        print('[% 3d/% 3d] test acc %5.3f' % (index, len(test_loader), acc), end='')
-        print(' test loss %6.4f, %5.3fsec' % (loss.item() / index, timeit.default_timer() - start_time))
+        print('batch %2d/%2d test acc %5.3f' % (index, len(test_loader), acc), end='')
+        print(' test loss %6.4f %5.3fsec' % (loss.item() / index, timeit.default_timer() - start_time))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

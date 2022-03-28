@@ -1,13 +1,6 @@
 #!/bin/bash
 
-if [ -d openvino ]; then
-    source openvino/bin/activate
-else
-    python3 -m venv openvino
-    source openvino/bin/activate
-    pip install --upgrade pip
-    pip install openvino_dev torchvision onnx
-fi
+pip install -r requirements.txt
 
 if [ ! -d images ]; then
     git clone https://github.com/EliSchwartz/imagenet-sample-images images
@@ -35,6 +28,6 @@ if [ ! -f model/INT8/resnet-50.xml ]; then
     cp $(ls results/resnet-50_DefaultQuantization/*/optimized/* | tail -3) model/INT8
 fi
 
-python infer.py
-python infer.py --mode fp32
-python infer.py --mode int8
+python main.py
+python main.py --mode fp32
+python main.py --mode int8
