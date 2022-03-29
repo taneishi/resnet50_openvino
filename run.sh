@@ -24,7 +24,7 @@ echo "CPUS=${CPUS} CORES=${CORES} TOTAL_CORES=${TOTAL_CORES}"
 export OMP_NUM_THREADS=${TOTAL_CORES}
 export KMP_SETTING="KMP_AFFINITY=granularity=fine,compact,1,0"
 
-pip install -q -r requirements.txt
+pip install -r requirements.txt
 
 if [ ! -f model/resnet-50.onnx ]; then
     python export_onnx.py
