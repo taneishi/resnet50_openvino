@@ -27,6 +27,7 @@ export KMP_SETTING="KMP_AFFINITY=granularity=fine,compact,1,0"
 pip install -r requirements.txt
 
 if [ ! -f model/resnet-50.onnx ]; then
+    mkdir -p model
     python export_onnx.py
 fi
 

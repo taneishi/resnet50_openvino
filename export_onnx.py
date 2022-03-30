@@ -1,7 +1,6 @@
 import torchvision
 import torch
 import argparse
-import os
 
 def main(args):
     torch.manual_seed(123)
@@ -13,7 +12,6 @@ def main(args):
 
     torch_out = net(dummy_input)
 
-    os.makedirs('model', exist_ok=True)
     torch.onnx.export(net, dummy_input, '%s/%s.onnx' % (args.model_dir, args.model_name), verbose=False)
     print('ONNX models exported.')
 

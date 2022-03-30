@@ -38,9 +38,9 @@ def main(args):
 
     elif args.mode == 'fp32' or args.mode == 'int8':
         if args.mode == 'fp32':
-            model_xml = '%s/%s.xml' % (args.model_dir, args.model_name)
+            model_xml = 'model/%s.xml' % (args.model_name)
         elif args.mode == 'int8':
-            model_xml = '%s/INT8/%s.xml' % (args.model_dir, args.model_name)
+            model_xml = 'model/INT8/%s.xml' % (args.model_name)
 
         model_bin = model_xml.replace('xml', 'bin')
 
@@ -85,7 +85,6 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--mode', choices=['torch', 'fp32', 'int8'], default='torch', type=str)
     parser.add_argument('--data_dir', default='images', type=str)
-    parser.add_argument('--model_dir', default='model', type=str)
     parser.add_argument('--model_name', default='resnet-50', type=str)
     args = parser.parse_args()
     print(vars(args))
