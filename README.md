@@ -19,18 +19,13 @@ In this section, I use image recognition as an example to show how OpenVINO can 
 For the image recognition model, I use *ResNet-50* provided by torchvision, and for the dataset, 
 I use a sampling dataset with labels defined according to *ImageNet*, a dataset for image recognition.
 
-## Execution environment
+## Requirements
 
-As an example of the execution environment, a setup using Python3 venv is shown below.
+Dendencies of Python3 modules are described in `requirements.txt`.
 
 ```bash
-python3 -m venv openvino
-source openvino/bin/activate
-pip install --upgrade pip
-pip install openvino_dev torchvision onnx
+pip install -r requirements.txt
 ```
-
-If this environment does not exist, `run.sh`, which will be introduced later, will automatically create it.
 
 ## Build a learning model and optimize and quantize the model
 
